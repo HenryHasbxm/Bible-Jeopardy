@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fellowship Trivia & Testimony</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        h1 { color: #2c3e50; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 800px; width: 100%; }
+        .category-header { background-color: #2c3e50; color: white; padding: 15px; text-align: center; font-weight: bold; border-radius: 8px; }
+        .card { background-color: #3498db; color: white; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: transform 0.2s, background-color 0.2s; }
+        .card:hover { transform: scale(1.05); background-color: #2980b9; }
+        .card.used { background-color: #bdc3c7; cursor: default; transform: none; }
+        
+        /* Modal Styles */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: white; padding: 40px; border-radius: 15px; max-width: 600px; width: 100%; text-align: center; position: relative; }
+        .question-text { font-size: 22px; margin-bottom: 20px; color: #333; }
+        .answer-text { font-size: 18px; color: #27ae60; font-weight: bold; display: none; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+        button { background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 5px; }
+        button:hover { background: #34495e; }
+    </style>
+</head>
+<body>
+
+    <h1>Fellowship Game Night</h1>
+    <p>Select a tile to reveal a Bible question or a fellowship prompt!</p>
+
+    <div class="grid" id="game-board">
+        <div class="category-header">Old Testament</div>
+        <div class="category-header">New Testament</div>
+        <div class="category-header">Parables</div>
+        <div class="category-header">Fellowship</div>
+
+        </div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <div class="question-text" id="question"></div>
+            <div class="answer-text" id="answer"></div>
+            <br>
+            <button onclick="toggleAnswer()" id="reveal-btn">Show Answer</button>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const gameData = [
+            { cat: 0, val: 100, q: "Who led the Israelites out of Egypt?", a: "Moses" },
+            { cat: 1, val: 100, q: "In what city was Jesus born?", a: "Bethlehem" },
+            { cat: 2, val: 100, q: "In the parable, who helped the injured man on the road?", a: "The Good Samaritan" },
+            { cat: 3, val: 100, q: "FELLOWSHIP: Share one thing you are grateful for this week.", a: "Group Discussion" },
+            
+            { cat: 0, val: 200, q: "Which young man defeated a giant named Goliath?", a: "David" },
+            { cat: 1, val: 200, q: "Who was the tax collector who climbed a tree to see Jesus?", a: "Zacchaeus" },
+            { cat: 2, val: 200, q: "What did the father give his Prodigal Son upon his return?", a: "A robe, a ring, and a feast" },
+            { cat: 3, val: 200, q: "FELLOWSHIP: What is your favorite hymn or worship song and why?", a: "Group Discussion" },
+
+            { cat: 0, val: 300, q: "How many days and nights did it rain during the Great Flood?", a: "40 days and 40 nights" },
+            { cat: 1, val: 300, q: "What was Paul's name before he encountered Jesus on the road to Damascus?", a: "Saul" },
+            { cat: 2, val: 300, q: "In the parable of the Sower, what does the seed represent?", a: "The Word of God" },
+            { cat: 3, val: 300, q: "FELLOWSHIP: Share a time when you felt God's peace.", a: "Group Testimony" }
+        ];
+
+        const board = document.getElementById('game-board');
+        const modal = document.getElementById('modal');
+        const qText = document.getElementById('question');
+        const aText = document.getElementById('answer');
+        const revealBtn = document.getElementById('reveal-btn');
+
+        // Initialize Board
+        gameData.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerText = item.val;
+            card.onclick = () => {
+                if(!card.classList.contains('used')) {
+                    showQuestion(index, card);
+                }
+            };
+            board.appendChild(card);
+        });
+
+        function showQuestion(index, cardElement) {
+            const item = gameData[index];
+            qText.innerText = item.q;
+            aText.innerText = "Answer: " + item.a;
+            aText.style.display = 'none';
+            revealBtn.style.display = 'inline-block';
+            modal.style.display = 'flex';
+            cardElement.classList.add('used');
+        }
+
+        function toggleAnswer() {
+            aText.style.display = 'block';
+            revealBtn.style.display = 'none';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
