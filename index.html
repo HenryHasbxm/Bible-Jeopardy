@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bible Chapter Jeopardy</title>
+    <title>Bible Jeopardy</title>
     <style>
         * {
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         body {
             background-color: #1a1a2e;
@@ -62,6 +62,7 @@
             background-color: #e94560;
         }
 
+        /* Overlay & Modals */
         .overlay {
             display: none;
             position: fixed;
@@ -73,14 +74,15 @@
         }
         .modal {
             background-color: #16213e;
-            padding: 20px;
+            padding: 25px;
             border-radius: 8px;
-            max-width: 600px;
+            max-width: 650px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
             text-align: center;
             border: 2px solid #f1c40f;
+            box-shadow: 0 0 20px rgba(241, 196, 15, 0.2);
         }
         .chapter-grid {
             display: grid;
@@ -95,58 +97,110 @@
             padding: 10px;
             border-radius: 4px;
             cursor: pointer;
+            font-weight: bold;
         }
         .chapter-btn:hover {
             background-color: #f1c40f;
             color: #000;
         }
 
+        /* Teams Management Bar */
+        .team-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            background-color: #0f3460;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .team-card {
+            background-color: #16213e;
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 2px solid #27ae60;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+        .team-score {
+            color: #f1c40f;
+            font-size: 1.1em;
+        }
+        .btn-small {
+            background-color: #e94560;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* Jeopardy Board Layout */
         .game-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
             background-color: #0f3460;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-radius: 5px;
         }
         .board {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            max-width: 900px;
+            gap: 12px;
+            max-width: 950px;
             margin: 0 auto;
         }
         .category-header {
             background-color: #06101e;
             color: #f1c40f;
-            padding: 15px;
+            padding: 15px 5px;
             text-align: center;
             font-weight: bold;
             font-size: 16px;
             border: 1px solid #0f3460;
+            border-radius: 4px;
         }
         .clue-card {
             background-color: #0f3460;
             color: #f1c40f;
-            height: 80px;
+            height: 90px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 6px;
+            transition: transform 0.2s, background-color 0.2s;
         }
         .clue-card:hover {
             background-color: #1a508b;
+            transform: scale(1.02);
         }
         .clue-card.disabled {
-            background-color: #222;
-            color: #555;
+            background-color: #111a2e;
+            color: #334155;
             cursor: not-allowed;
+            transform: none;
         }
 
+        .team-assign-grid {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .btn-correct { background-color: #27ae60; color: white; }
+        .btn-wrong { background-color: #c0392b; color: white; }
+        
         .btn-close {
             background-color: #e94560;
             color: #fff;
@@ -154,7 +208,6 @@
             padding: 8px 15px;
             border-radius: 4px;
             cursor: pointer;
-            margin-top: 15px;
         }
     </style>
 </head>
@@ -162,25 +215,32 @@
 
     <h1>Bible Chapter Jeopardy</h1>
 
+    <!-- Scoreboard / Teams Header -->
+    <div class="team-bar">
+        <span style="font-weight: bold; color: #f1c40f;">TEAMS:</span>
+        <div id="teams-list" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+        <button class="btn-small" style="background-color: #27ae60;" onclick="addTeam()">+ Add Team</button>
+    </div>
+
+    <!-- MAIN VIEW: Books split OT (Left) & NT (Right) -->
     <div id="selection-view" class="container">
-        <!-- Old Testament (Left) -->
         <div class="testament-col">
             <h2>Old Testament</h2>
             <div id="ot-grid" class="book-grid"></div>
         </div>
         
-        <!-- New Testament (Right) -->
         <div class="testament-col">
             <h2>New Testament</h2>
             <div id="nt-grid" class="book-grid"></div>
         </div>
     </div>
 
-    <!-- Chapter Selection Modal -->
+    <!-- Chapter Modal -->
     <div id="chapter-modal" class="overlay">
         <div class="modal">
             <h2 id="modal-book-title">Select Chapter</h2>
             <div id="chapter-grid" class="chapter-grid"></div>
+            <br>
             <button class="btn-close" onclick="closeModal()">Cancel</button>
         </div>
     </div>
@@ -188,30 +248,38 @@
     <!-- Jeopardy Board View -->
     <div id="jeopardy-view" style="display: none;">
         <div class="game-header">
-            <button class="btn-close" style="margin: 0;" onclick="exitGame()">← Back to Books</button>
+            <button class="btn-close" onclick="exitGame()">← Back to Books</button>
             <h2 id="game-title" style="margin: 0; color: #f1c40f;"></h2>
-            <div>Score: $<span id="score">0</span></div>
+            <div></div>
         </div>
         <div class="board" id="board"></div>
     </div>
 
-    <!-- Question Modal -->
+    <!-- Question/Answer Modal -->
     <div id="clue-modal" class="overlay">
         <div class="modal">
-            <h3 id="clue-value" style="color:#f1c40f;"></h3>
-            <p id="clue-text" style="font-size: 18px; margin: 20px 0;"></p>
-            <div id="answer-section" style="display:none;">
-                <p id="answer-text" style="color: #4ecca3; font-weight: bold;"></p>
+            <h3 id="clue-value" style="color:#f1c40f; font-size: 24px;"></h3>
+            <p id="clue-text" style="font-size: 20px; margin: 20px 0; line-height: 1.4;"></p>
+            
+            <div id="answer-section" style="display:none; margin: 20px 0; padding: 15px; background: #0f3460; border-radius: 6px;">
+                <p style="color: #aaa; margin-bottom: 5px;">ANSWER:</p>
+                <p id="answer-text" style="color: #4ecca3; font-weight: bold; font-size: 20px;"></p>
             </div>
-            <button id="show-answer-btn" class="book-btn" onclick="revealAnswer()">Show Answer</button>
-            <div id="score-btns" style="display:none; margin-top:15px; gap: 10px; justify-content: center;">
-                <button class="book-btn" style="background:#27ae60;" onclick="adjustScore(true)">Correct (+)</button>
-                <button class="book-btn" style="background:#c0392b;" onclick="adjustScore(false)">Incorrect (-)</button>
+
+            <button id="show-answer-btn" class="book-btn" style="font-size: 16px; padding: 10px 20px;" onclick="revealAnswer()">Show Answer</button>
+
+            <!-- Multi-team scoring options -->
+            <div id="score-controls" style="display:none; flex-direction: column; gap: 10px; margin-top:15px;">
+                <p style="font-size: 14px; color: #ccc;">Award or Deduct points for a team:</p>
+                <div id="team-score-buttons" class="team-assign-grid"></div>
+                <br>
+                <button class="btn-close" onclick="closeClueModal()">Close Clue</button>
             </div>
         </div>
     </div>
 
     <script>
+        // 66 Books of the Bible Data
         const oldTestament = {
             "Genesis": 50, "Exodus": 40, "Leviticus": 27, "Numbers": 36, "Deuteronomy": 34,
             "Joshua": 24, "Judges": 21, "Ruth": 4, "1 Samuel": 31, "2 Samuel": 24,
@@ -232,13 +300,55 @@
             "Jude": 1, "Revelation": 22
         };
 
+        // Specific Questions Database for major chapters
+        const chapterDatabase = {
+            "Genesis 1": [
+                { cat: "Creation", val: 100, q: "What did God create on the first day?", a: "Light (and separated it from darkness)" },
+                { cat: "Creation", val: 200, q: "On which day did God create land animals and humans?", a: "The Sixth Day" },
+                { cat: "Key Details", val: 300, q: "According to Genesis 1:26, in whose image was mankind made?", a: "In God's image and likeness" }
+            ],
+            "Genesis 2": [
+                { cat: "Garden of Eden", val: 100, q: "What did God do on the seventh day after finishing creation?", a: "He rested and made it holy" },
+                { cat: "People & Places", val: 200, q: "From what material did God form the first man?", a: "The dust of the ground" },
+                { cat: "Key Details", val: 300, q: "What tree was Adam forbidden to eat from?", a: "The Tree of the Knowledge of Good and Evil" }
+            ],
+            "Genesis 3": [
+                { cat: "The Fall", val: 100, q: "Which creature deceived Eve in the Garden?", a: "The Serpent" },
+                { cat: "Key Details", val: 200, q: "How did Adam and Eve cover themselves after realizing they were naked?", a: "They sewed fig leaves together" },
+                { cat: "Consequences", val: 300, q: "What did God place at the east of Eden to guard the tree of life?", a: "Cherubim and a flaming sword" }
+            ],
+            "Matthew 1": [
+                { cat: "Genealogy", val: 100, q: "Whose family line is traced at the opening of Matthew 1?", a: "Jesus Christ (son of David, son of Abraham)" },
+                { cat: "Prophecy", val: 200, q: "What name meaning 'God with us' was given to Jesus in verse 23?", a: "Immanuel" },
+                { cat: "Key Details", val: 300, q: "An angel appeared to Joseph in a what, telling him not to fear taking Mary as his wife?", a: "A Dream" }
+            ],
+            "Luke 2": [
+                { cat: "Nativity", val: 100, q: "In what town was Jesus born according to Luke 2?", a: "Bethlehem" },
+                { cat: "People", val: 200, q: "Who were keeping watch over their flock by night when angels appeared?", a: "The Shepherds" },
+                { cat: "Temple Events", val: 300, q: "What devout man in the temple praised God after seeing the baby Jesus?", a: "Simeon" }
+            ],
+            "John 1": [
+                { cat: "The Word", val: 100, q: "What was 'in the beginning' according to John 1:1?", a: "The Word (Logos)" },
+                { cat: "John the Baptist", val: 200, q: "What title did John the Baptist give Jesus when he saw Him coming?", a: "The Lamb of God" },
+                { cat: "Disciples", val: 300, q: "Under what type of tree did Jesus say He saw Nathanael before Philip called him?", a: "A Fig Tree" }
+            ],
+            "Revelation 22": [
+                { cat: "New Jerusalem", val: 100, q: "What flows from the throne of God down the middle of the city street?", a: "The River of the Water of Life" },
+                { cat: "Titles of Christ", val: 200, q: "Jesus declares in verse 13: 'I am the ____ and the ____, the First and the Last.'", a: "Alpha and Omega" },
+                { cat: "Closing", val: 300, q: "What is the very last sentence/prayer in Revelation 22?", a: "'The grace of the Lord Jesus be with God's people. Amen.'" }
+            ]
+        };
+
+        // State variables
+        let teams = [{ name: "Team 1", score: 0 }, { name: "Team 2", score: 0 }];
         let selectedBook = "";
         let selectedChapter = 0;
-        let currentScore = 0;
         let currentClueValue = 0;
         let activeCardElement = null;
 
+        // Initialize App
         function init() {
+            renderTeams();
             const otGrid = document.getElementById("ot-grid");
             const ntGrid = document.getElementById("nt-grid");
 
@@ -250,6 +360,40 @@
             }
         }
 
+        // Team Management
+        function renderTeams() {
+            const list = document.getElementById("teams-list");
+            list.innerHTML = "";
+            teams.forEach((team, index) => {
+                const card = document.createElement("div");
+                card.className = "team-card";
+                card.innerHTML = `
+                    <span>${team.name}:</span>
+                    <span class="team-score">$${team.score}</span>
+                    <button class="btn-small" onclick="removeTeam(${index})">✕</button>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function addTeam() {
+            const name = prompt("Enter team name:", `Team ${teams.length + 1}`);
+            if (name) {
+                teams.push({ name: name, score: 0 });
+                renderTeams();
+            }
+        }
+
+        function removeTeam(index) {
+            if (teams.length <= 1) {
+                alert("You must have at least one team.");
+                return;
+            }
+            teams.splice(index, 1);
+            renderTeams();
+        }
+
+        // Book & Chapter Selection
         function createBookButton(name, chapters) {
             const btn = document.createElement("button");
             btn.className = "book-btn";
@@ -260,7 +404,7 @@
 
         function openChapterModal(bookName, chapterCount) {
             selectedBook = bookName;
-            document.getElementById("modal-book-title").innerText = `${bookName} - Select Chapter`;
+            document.getElementById("modal-book-title").innerText = `${bookName} - Choose Chapter`;
             const grid = document.getElementById("chapter-grid");
             grid.innerHTML = "";
 
@@ -279,6 +423,7 @@
             document.getElementById("chapter-modal").style.display = "none";
         }
 
+        // Start Jeopardy Game
         function startGame(chapter) {
             selectedChapter = chapter;
             closeModal();
@@ -287,8 +432,6 @@
             document.getElementById("jeopardy-view").style.display = "block";
             document.getElementById("game-title").innerText = `${selectedBook} ${selectedChapter}`;
             
-            currentScore = 0;
-            updateScoreDisplay();
             buildBoard();
         }
 
@@ -297,12 +440,14 @@
             document.getElementById("selection-view").style.display = "flex";
         }
 
+        // Build Jeopardy Board
         function buildBoard() {
             const board = document.getElementById("board");
             board.innerHTML = "";
 
-            const categories = ["Key Events", "People & Places", "Key Details"];
+            const categories = ["Key Events", "People & Words", "Chapter Details"];
             
+            // Header Row
             categories.forEach(cat => {
                 const header = document.createElement("div");
                 header.className = "category-header";
@@ -310,23 +455,56 @@
                 board.appendChild(header);
             });
 
+            // Get specific clues if available, otherwise generate contextual fallback questions
+            const key = `${selectedBook} ${selectedChapter}`;
+            const specificClues = chapterDatabase[key];
+
             const values = [100, 200, 300];
-            values.forEach(val => {
-                categories.forEach((cat) => {
+            
+            values.forEach((val, valIdx) => {
+                categories.forEach((cat, catIdx) => {
                     const card = document.createElement("div");
                     card.className = "clue-card";
                     card.innerText = `$${val}`;
-                    
                     card.dataset.value = val;
-                    card.dataset.clue = `[${cat} $${val}] Question prompt regarding key elements in ${selectedBook} Chapter ${selectedChapter}.`;
-                    card.dataset.answer = `What/Who is the main answer associated with ${selectedBook} ${selectedChapter}?`;
-                    
+
+                    let clueObj;
+                    if (specificClues && specificClues[valIdx * 3 + catIdx]) {
+                        clueObj = specificClues[valIdx * 3 + catIdx];
+                    } else {
+                        // Contextual fallback generation for any chapter in the Bible
+                        clueObj = generateDynamicClue(selectedBook, selectedChapter, cat, val);
+                    }
+
+                    card.dataset.clue = clueObj.q;
+                    card.dataset.answer = clueObj.a;
+
                     card.onclick = () => openClue(card);
                     board.appendChild(card);
                 });
             });
         }
 
+        function generateDynamicClue(book, chapter, category, value) {
+            if (value === 100) {
+                return {
+                    q: `What general testament and book contains the scripture verse ${book} chapter ${chapter}?`,
+                    a: `The book of ${book} in the ${oldTestament[book] ? 'Old Testament' : 'New Testament'}.`
+                };
+            } else if (value === 200) {
+                return {
+                    q: `In ${book} Chapter ${chapter}, what is the central event, teaching, or theme presented in this section?`,
+                    a: `Key narrative/doctrine recorded in ${book} chapter ${chapter}.`
+                };
+            } else {
+                return {
+                    q: `Recite or summarize a key verse or major figure prominent in ${book} Chapter ${chapter}.`,
+                    a: `Major quote or figure featured in ${book} ${chapter}.`
+                };
+            }
+        }
+
+        // Clue Display & Multi-Team Score Logic
         function openClue(card) {
             if (card.classList.contains("disabled")) return;
             
@@ -339,7 +517,7 @@
             
             document.getElementById("answer-section").style.display = "none";
             document.getElementById("show-answer-btn").style.display = "inline-block";
-            document.getElementById("score-btns").style.display = "none";
+            document.getElementById("score-controls").style.display = "none";
 
             document.getElementById("clue-modal").style.display = "flex";
         }
@@ -347,30 +525,45 @@
         function revealAnswer() {
             document.getElementById("answer-section").style.display = "block";
             document.getElementById("show-answer-btn").style.display = "none";
-            document.getElementById("score-btns").style.display = "flex";
+            
+            // Build buttons for each team to score
+            const container = document.getElementById("team-score-buttons");
+            container.innerHTML = "";
+
+            teams.forEach((team, index) => {
+                const teamDiv = document.createElement("div");
+                teamDiv.style.display = "flex";
+                teamDiv.style.gap = "5px";
+                teamDiv.innerHTML = `
+                    <button class="book-btn btn-correct" onclick="awardScore(${index}, true)">${team.name} (+ $${currentClueValue})</button>
+                    <button class="book-btn btn-wrong" onclick="awardScore(${index}, false)">${team.name} (- $${currentClueValue})</button>
+                `;
+                container.appendChild(teamDiv);
+            });
+
+            document.getElementById("score-controls").style.display = "flex";
         }
 
-        function adjustScore(isCorrect) {
+        function awardScore(teamIndex, isCorrect) {
             if (isCorrect) {
-                currentScore += currentClueValue;
+                teams[teamIndex].score += currentClueValue;
             } else {
-                currentScore -= currentClueValue;
+                teams[teamIndex].score -= currentClueValue;
             }
-            updateScoreDisplay();
+            renderTeams();
+            closeClueModal();
+        }
 
+        function closeClueModal() {
             if (activeCardElement) {
                 activeCardElement.classList.add("disabled");
                 activeCardElement.innerText = "";
                 activeCardElement.onclick = null;
             }
-
             document.getElementById("clue-modal").style.display = "none";
         }
 
-        function updateScoreDisplay() {
-            document.getElementById("score").innerText = currentScore;
-        }
-
+        // Launch app
         init();
     </script>
 </body>
